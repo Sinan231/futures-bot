@@ -1,0 +1,405 @@
+# Trading System Configuration
+
+# Data Sources
+data_sources:
+  # Binance API settings
+  binance:
+    api_base: "https://api.binance.com"
+    testnet_api_base: "https://testnet.binance.vision"
+    websocket_base: "wss://stream.binance.com:9443"
+    testnet_websocket_base: "wss://testnet.binance.vision"
+
+    # Data endpoints
+    endpoints:
+      klines: "/api/v3/klines"
+      agg_trades: "/api/v3/aggTrades"
+      depth: "/api/v3/depth"
+      book_ticker: "/api/v3/ticker/bookTicker"
+      mark_price: "/fapi/v1/premiumIndex"
+      open_interest: "/fapi/v1/openInterest"
+      funding_rate: "/fapi/v1/fundingRate"
+      recent_trades: "/api/v1/trades"
+
+    # Rate limits (requests per minute)
+    rate_limits:
+      general: 1200
+      depth: 100
+      klines: 100
+      trades: 100
+
+  # Data retention
+  retention:
+    raw_data_days: 365
+    processed_data_days: 730
+    features_data_days: 90
+    signals_data_days: 30
+
+# Trading Pairs and Markets
+trading:
+  # Default trading pair
+  default_pair: "BTCUSDT"
+
+  # Supported pairs (add more as needed)
+  supported_pairs:
+    - "BTCUSDT"
+    - "ETHUSDT"
+    - "ADAUSDT"
+    - "SOLUSDT"
+    - "DOTUSDT"
+    - "LINKUSDT"
+    - "MATICUSDT"
+    - "AVAXUSDT"
+
+  # Supported timeframes
+  timeframes:
+    - "1m"   # 1 minute
+    - "5m"   # 5 minutes
+    - "15m"  # 15 minutes
+    - "30m"  # 30 minutes
+    - "1h"   # 1 hour
+    - "4h"   # 4 hours
+    - "1d"   # 1 day
+
+  # Default timeframes for analysis
+  default_timeframes: ["1m", "5m", "1h", "4h"]
+
+# Risk Management
+risk_management:
+  # Position sizing
+  position_sizing:
+    # Risk per trade as percentage of equity
+    risk_per_trade_percent: 0.5  # 0.5% of equity
+
+    # Maximum position size per trade
+    max_position_size_percent: 10.0  # 10% of equity
+
+    # Portfolio-level exposure limits
+    max_portfolio_exposure_percent: 20.0  # 20% of total equity
+
+    # Correlation limits
+    max_correlated_positions: 3
+    correlation_threshold: 0.7
+
+  # Leverage settings
+  leverage:
+    # Base leverage settings
+    base_leverage: 3.0
+    max_leverage: 20.0
+    recommended_leverage: 10.0
+
+    # Volatility-adjusted leverage
+    volatility_adjustment: true
+    volatility_multiplier: 0.5
+    volatility_window: 20
+
+    # Market condition adjustments
+    high_volatility_threshold: 2.0  # 2x normal volatility
+    low_volatility_threshold: 0.5  # 0.5x normal volatility
+
+  # Stop loss and take profit
+  exit_rules:
+    # ATR-based stop loss
+    atr_multiplier: 1.5
+    atr_period: 14
+    min_stop_loss_percent: 0.5
+    max_stop_loss_percent: 5.0
+
+    # Take profit levels (multiples of ATR)
+    take_profit_levels:
+      tp1_atr_multiplier: 0.5
+      tp2_atr_multiplier: 1.0
+      tp3_atr_multiplier: 2.0
+
+    # Trailing stop
+    trailing_stop_enabled: true
+    trailing_stop_atr_multiplier: 1.0
+    trailing_stop_activation_percent: 1.0
+
+  # Market condition filters
+  market_filters:
+    # Minimum volume requirement
+    min_volume_24h_usd: 1000000  # $1M daily volume
+
+    # Volatility filters
+    min_volatility_percent: 0.1  # 0.1% minimum volatility
+    max_volatility_percent: 10.0  # 10% maximum volatility
+
+    # Price change filters
+    max_price_change_1m_percent: 5.0  # 5% max 1-minute change
+    max_price_change_5m_percent: 10.0  # 10% max 5-minute change
+
+    # Market hours filters
+    trading_hours_filter: false  # Crypto trades 24/7, but can be enabled
+    trading_sessions:  # If filter enabled
+      - name: "Asian"
+        start: "00:00"
+        end: "08:00"
+      - name: "European"
+        start: "07:00"
+        end: "16:00"
+      - name: "US"
+        start: "13:00"
+        end: "22:00"
+
+# Signal Generation
+signals:
+  # Confidence thresholds
+  confidence:
+    minimum_threshold: 0.80  # 80% minimum confidence
+    high_confidence_threshold: 0.90  # 90% for high confidence
+    calibration_enabled: true
+
+  # Signal filtering
+  filtering:
+    # Cooldown period between signals for same pair (seconds)
+    cooldown_seconds: 3600  # 1 hour
+
+    # Maximum signals per hour
+    max_signals_per_hour: 5
+
+    # Maximum signals per day
+    max_signals_per_day: 50
+
+    # Duplicate signal prevention
+    prevent_duplicates: true
+    duplicate_threshold_percent: 0.5  # Price change threshold
+
+  # Signal validation
+  validation:
+    # Market condition validation
+    check_market_conditions: true
+
+    # Risk management validation
+    check_risk_limits: true
+
+    # Portfolio constraints validation
+    check_portfolio_constraints: true
+
+    # Technical validation (trend, support/resistance)
+    check_technical_analysis: false
+
+# Order Execution (simulation only - no real orders)
+execution:
+  # Simulation parameters
+  simulation:
+    # Slippage model
+    slippage:
+      model: "volume_based"  # Options: fixed, percentage, volume_based
+      fixed_bps: 2  # Fixed 2 bps slippage
+      max_slippage_percent: 0.1  # Maximum 0.1% slippage
+      volume_impact_factor: 0.001  # Impact factor for volume-based slippage
+
+    # Fees
+    fees:
+      maker_fee_percent: 0.02  # 0.02% maker fee
+      taker_fee_percent: 0.04  # 0.04% taker fee
+      funding_rate_multiplier: 1.0  # Apply full funding rates
+
+    # Latency simulation
+    latency:
+      signal_to_execution_ms: 100  # 100ms average latency
+      execution_confirmation_ms: 50  # 50ms confirmation time
+
+    # Partial fills
+    partial_fills:
+      enabled: true
+      fill_probability: 0.95  # 95% chance of full fill
+      min_fill_percent: 0.5  # Minimum 50% fill
+
+# Portfolio Management
+portfolio:
+  # Initial portfolio settings
+  initial_equity: 100000  # $100,000 starting equity
+  currency: "USDT"
+
+  # Position tracking
+  positions:
+    # Maximum positions per pair
+    max_positions_per_pair: 1
+
+    # Maximum total positions
+    max_total_positions: 10
+
+    # Position size limits
+    min_position_size_usd: 100  # Minimum $100 position
+    max_position_size_usd: 10000  # Maximum $10,000 position
+
+  # Performance tracking
+  performance:
+    # Daily P&L tracking
+    track_daily_pnl: true
+
+    # Rolling metrics
+    rolling_window_days: 30
+
+    # Benchmark comparison
+    benchmark: "BTCUSDT"  # Compare against BTC performance
+
+  # Risk monitoring
+  risk_monitoring:
+    # Drawdown alerts
+    drawdown_alert_levels: [5.0, 10.0, 15.0, 20.0]  # Alert levels in percent
+
+    # VaR calculation
+    var_confidence_levels: [0.95, 0.99]  # 95% and 99% VaR
+    var_window_days: 30
+
+    # Correlation monitoring
+    correlation_matrix_hours: 24
+    high_correlation_threshold: 0.8
+
+# Market Data Specifications
+market_data:
+  # Historical data requirements
+  historical:
+    # Data sources to fetch
+    sources:
+      klines: true
+      agg_trades: true
+      depth: true
+      book_ticker: true
+      mark_price: true
+      open_interest: true
+      funding_rate: true
+
+    # Data quality requirements
+    quality:
+      # Maximum missing data percentage
+      max_missing_data_percent: 5.0
+
+      # Outlier detection
+      outlier_detection: true
+      outlier_threshold_sigma: 3.0
+
+      # Data validation
+      validate_timestamps: true
+      validate_prices: true
+      validate_volumes: true
+
+  # Real-time data requirements
+  real-time:
+    # WebSocket streams
+    streams:
+      klines: true
+      agg_trades: true
+      depth: true
+      book_ticker: true
+      mark_price: true
+      open_interest: true
+      funding_rate: true
+
+    # Data buffering
+    buffering:
+      # Buffer size for each stream
+      max_buffer_size: 1000
+
+      # Data retention in buffer (minutes)
+      buffer_retention_minutes: 60
+
+    # Connection management
+    connection:
+      # Reconnection strategy
+      reconnect_delay_seconds: 5
+      max_reconnect_attempts: 10
+      connection_timeout_seconds: 30
+
+      # Heartbeat/ping settings
+      ping_interval_seconds: 30
+      pong_timeout_seconds: 10
+
+# Notifications and Alerting
+notifications:
+  # Email notifications
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    use_tls: true
+    sender_email: "trading-bot@yourcompany.com"
+    recipient_emails: ["admin@yourcompany.com"]
+
+  # Slack notifications
+  slack:
+    enabled: false
+    webhook_url: ""
+    default_channel: "#trading-alerts"
+    mention_users: ["@here"]
+
+  # Alert categories
+  alert_categories:
+    # System alerts
+    system:
+      enabled: true
+      include_disconnections: true
+      include_errors: true
+      include_performance_degradation: true
+
+    # Trading alerts
+    trading:
+      enabled: true
+      include_signals: true
+      include_high_risk_positions: true
+      include_large_drawdowns: true
+
+    # Model alerts
+    model:
+      enabled: true
+      include_model_drift: true
+      include_prediction_quality: true
+      include_retraining_events: true
+
+# Logging and Audit
+logging:
+  # Log levels
+  levels:
+    root: "INFO"
+    trading: "DEBUG"
+    models: "INFO"
+    data: "DEBUG"
+    performance: "INFO"
+
+  # Log formats
+  format: "json"  # Options: json, text
+
+  # Log rotation
+  rotation:
+    max_file_size_mb: 100
+    backup_count: 10
+    retention_days: 30
+
+  # Audit logging
+  audit:
+    enabled: true
+    log_signals: true
+    log_predictions: true
+    log_model_changes: true
+    log_configuration_changes: true
+
+# Backup and Recovery
+backup:
+  # Automated backups
+  automated:
+    enabled: true
+    backup_interval_hours: 6
+    max_backups: 28  # Keep 7 days of 4-hourly backups
+
+  # Backup locations
+  locations:
+    local:
+      enabled: true
+      path: "./backups"
+      compression: true
+
+    cloud:
+      enabled: false
+      provider: ""  # Options: aws, gcp, azure
+      bucket: ""
+      region: ""
+
+  # Data to backup
+  backup_data:
+    - "artifacts/models"
+    - "artifacts/scalers"
+    - "config"
+    - "logs"
+    - "data/processed"

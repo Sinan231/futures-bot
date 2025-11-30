@@ -1,0 +1,280 @@
+# Model Training Configuration
+
+# Label Generation
+labeling:
+  # Binary: long/short, Ternary: long/neutral/short, Regression: continuous return
+  label_type: "ternary"  # Options: binary, ternary, regression
+
+  # Horizon in hours for future return calculation
+  prediction_horizon_hours: 4
+
+  # Profit threshold for positive labels (percentage)
+  profit_threshold_percent: 2.0
+
+  # Stop loss threshold for negative labels (percentage)
+  stop_loss_threshold_percent: 1.0
+
+  # ATR-based threshold multiplier
+  atr_multiplier: 1.5
+
+  # Minimum price movement to generate label
+  min_price_movement_percent: 0.5
+
+# Feature Engineering
+features:
+  # Technical indicators to compute
+  technical_indicators:
+    moving_averages:
+      periods: [5, 10, 20, 50, 100, 200]
+      types: ["SMA", "EMA", "WMA"]
+
+    momentum:
+      rsi:
+        periods: [14, 21, 34]
+      macd:
+        fast: 12
+        slow: 26
+        signal: 9
+      stochastic:
+        k_period: 14
+        d_period: 3
+        slowing: 3
+      williams_r:
+        period: 14
+      rate_of_change:
+        periods: [5, 10, 20]
+
+    volatility:
+      atr:
+        periods: [14, 21]
+      bollinger_bands:
+        period: 20
+        std_dev: 2.0
+      historical_volatility:
+        windows: [20, 50]
+
+    volume:
+      obv: true
+      volume_rate_of_change:
+        periods: [5, 10, 20]
+      money_flow_index:
+        period: 14
+      volume_profile:
+        bins: 100
+
+  # Order book features
+  order_book:
+    depth_levels: 10
+    spread_features: true
+    imbalance_features: true
+    weighted_price_features: true
+
+  # Trade microstructure features
+  microstructure:
+    trade_count: true
+    average_trade_size: true
+    taker_buy_sell_ratio: true
+    trade_intensity: true
+    volume_weighted_price: true
+
+  # Time-based features
+  time_features:
+    hour_of_day: true
+    day_of_week: true
+    month_of_year: true
+    cyclical_features: true
+    session_indicators: true
+
+  # Feature selection
+  selection:
+    correlation_threshold: 0.95
+    variance_threshold: 0.01
+    mutual_information_threshold: 0.01
+    max_features: 200
+
+# Model Configuration
+models:
+  # LightGBM (gradient boosting)
+  lightgbm:
+    enabled: true
+    objective: "multiclass"  # For ternary classification
+    metric: ["multi_logloss", "multi_error"]
+    boosting_type: "gbdt"
+    num_leaves: 31
+    learning_rate: 0.05
+    feature_fraction: 0.9
+    bagging_fraction: 0.8
+    bagging_freq: 5
+    min_child_samples: 20
+    lambda_l1: 0.1
+    lambda_l2: 0.1
+    min_gain_to_split: 0.01
+    max_depth: -1
+
+  # XGBoost
+  xgboost:
+    enabled: true
+    objective: "multi:softprob"
+    eval_metric: "mlogloss"
+    max_depth: 6
+    learning_rate: 0.1
+    n_estimators: 1000
+    subsample: 0.8
+    colsample_bytree: 0.8
+    colsample_bylevel: 0.8
+    min_child_weight: 1
+    gamma: 0.1
+    reg_alpha: 0.1
+    reg_lambda: 0.1
+
+  # Random Forest
+  random_forest:
+    enabled: true
+    n_estimators: 1000
+    max_depth: 20
+    min_samples_split: 20
+    min_samples_leaf: 10
+    max_features: "sqrt"
+    bootstrap: true
+    oob_score: true
+
+  # LSTM (sequence model)
+  lstm:
+    enabled: true
+    sequence_length: 60  # Number of time steps
+    lstm_units: [128, 64]
+    dropout: 0.2
+    recurrent_dropout: 0.2
+    dense_units: [32]
+    batch_size: 32
+    epochs: 100
+
+  # 1D CNN (temporal patterns)
+  cnn:
+    enabled: true
+    sequence_length: 60
+    conv_filters: [64, 128, 64]
+    conv_kernel_sizes: [3, 5, 3]
+    pooling_size: 2
+    dropout: 0.2
+    dense_units: [64, 32]
+    batch_size: 32
+    epochs: 100
+
+  # Transformer (attention-based)
+  transformer:
+    enabled: true
+    sequence_length: 60
+    d_model: 128
+    n_heads: 8
+    n_layers: 4
+    d_ff: 512
+    dropout: 0.1
+    batch_size: 32
+    epochs: 100
+
+# Hyperparameter Optimization
+hyperparameter_optimization:
+  enabled: true
+  method: "optuna"  # Options: optuna, grid, random
+
+  # Optuna configuration
+  optuna:
+    n_trials: 100
+    direction: "maximize"
+    sampler: "TPESampler"
+    pruner: "HyperbandPruner"
+
+    # Study configuration
+    study_name: "trading_model_optimization"
+    storage: "sqlite:///optuna_study.db"
+    load_if_exists: true
+
+    # Timeout configuration
+    timeout_hours: 24
+
+    # Parameter ranges for LightGBM (example)
+    param_ranges:
+      lightgbm:
+        num_leaves: [10, 200]
+        learning_rate: [0.001, 0.3]
+        feature_fraction: [0.6, 1.0]
+        bagging_fraction: [0.6, 1.0]
+        min_child_samples: [5, 100]
+        lambda_l1: [0.0, 1.0]
+        lambda_l2: [0.0, 1.0]
+        max_depth: [3, 20]
+
+# Training Configuration
+training:
+  # Data splitting
+  train_val_test_split: [0.7, 0.15, 0.15]
+
+  # Cross-validation
+  cv_folds: 5
+  cv_method: "time_series_split"  # Options: time_series_split, kfold, stratified
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 20
+    min_delta: 0.001
+    restore_best_weights: true
+
+  # Random seed for reproducibility
+  random_seed: 42
+
+  # Parallel processing
+  n_jobs: -1  # Use all available cores
+
+  # Memory management
+  batch_processing: true
+  chunk_size: 10000
+
+# Model Selection Criteria
+selection:
+  # Performance thresholds
+  min_precision: 0.60
+  min_recall: 0.50
+  min_f1_score: 0.55
+  min_roc_auc: 0.70
+
+  # Financial performance thresholds
+  min_sharpe_ratio: 1.2
+  max_drawdown_percent: 20.0
+  min_win_rate: 0.55
+  max_overfitting_ratio: 1.5
+
+  # Calibration
+  calibration_threshold: 0.05
+  brier_score_threshold: 0.25
+
+  # Selection method
+  method: "composite_score"  # Options: best_metric, composite_score, ensemble
+
+  # Composite score weights (when method is composite_score)
+  composite_weights:
+    precision: 0.3
+    sharpe_ratio: 0.3
+    calibration: 0.2
+    stability: 0.2
+
+# Model Registry
+registry:
+  # Versioning
+  versioning:
+    enabled: true
+    semantic_versioning: true
+    auto_increment: true
+
+  # Metadata storage
+  metadata:
+    store_hyperparameters: true
+    store_feature_importance: true
+    store_training_data: true
+    store_performance_metrics: true
+
+  # Model retention
+  retention:
+    max_models: 10
+    cleanup_days: 30
